@@ -1,38 +1,43 @@
 const express = require('express');
 const app = express();
 app.set('view engine', 'ejs');
-const path = require('path');
+const createPath = require('./helpers/create_path');
+const morgan = require('morgan');
+const mongoose = require('mongoose');
+
+const postRoutes = require('./routes/post-routes');
+const contactRoutes = require('./routes/contact-routes');
 
 const PORT = 3000;
 
-const createPath = (page) => path.resolve(__dirname,'ejs-views', `${page}.ejs`);
+
+
+const db = 'mongodb://localhost:27017/todo_back';
+mongoose
+  .connect(db,{useNewUrlParser: true, useUnifiedTopology: true})
+  .then((res)=>{console.log('Connection DB');})
+  .catch((err)=>{console.log(`Some error: ${err}`);})
+// Стили
 
 app.use(express.static(`${__dirname}/public`));
+
+//Логгер
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
+
+app.use(postRoutes);
+app.use(contactRoutes);
+
+app.use(express.urlencoded({extended: false}));
+
+
+//роутинг
 app.get('/',(req,res)=>{  
   const title = 'Home';
   res.render(createPath('index'),{ title });
 })
-app.get('/posts:id',(req,res)=>{  
-  const title = 'Post';
-  res.render(createPath('post'),{ title });
-})
-app.get('/posts',(req,res)=>{  
-  const title = 'Posts';
-  res.render(createPath('posts'),{ title });
-})
-app.get('/add-post',(req,res)=>{  
-  const title = 'Add Post';
-  res.render(createPath('add-post'),{ title });
-})
-app.get('/contacts',(req,res)=>{  
-  const title = 'Contacts';
-  const contacts = [
-    { name: 'YouTube', link: '#' },
-    { name: 'Twitter', link: '#' },
-    { name: 'GitHub', link: '#' },
-  ];
-  res.render(createPath('contacts'), { contacts, title });
-})
+
+
+//обработка ошибок
 
 app.use((req, res) => {
   const title = 'Error Page';
